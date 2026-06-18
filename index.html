@@ -1,0 +1,1438 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>안전런 - TEK Safety Run</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+:root {
+–bg: #0a0e1a;
+–lane-bg: #111827;
+–lane-line: #1e3a5f;
+–accent: #00d4ff;
+–accent2: #ff6b35;
+–accent3: #00ff88;
+–warn: #ffcc00;
+–danger: #ff2d55;
+–text: #e8f4fd;
+–text-dim: #6b8caa;
+–panel: rgba(10,20,40,0.92);
+–glow: 0 0 20px rgba(0,212,255,0.4);
+}
+
+- { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+body {
+background: var(–bg);
+color: var(–text);
+font-family: ‘Noto Sans KR’, sans-serif;
+overflow: hidden;
+height: 100dvh;
+width: 100vw;
+touch-action: none;
+user-select: none;
+}
+
+/* ===== SCREENS ===== */
+.screen {
+position: absolute; inset: 0;
+display: flex; flex-direction: column;
+align-items: center; justify-content: center;
+z-index: 10;
+transition: opacity 0.3s;
+}
+.screen.hidden { opacity:0; pointer-events:none; }
+
+/* ===== START SCREEN ===== */
+#startScreen {
+background: linear-gradient(180deg, #050d1a 0%, #0a1628 60%, #0d1f3c 100%);
+padding: 24px;
+gap: 0;
+}
+
+.start-logo {
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 42px;
+color: var(–accent);
+text-shadow: var(–glow), 0 0 60px rgba(0,212,255,0.2);
+letter-spacing: 2px;
+line-height: 1;
+margin-bottom: 4px;
+}
+.start-sub {
+font-size: 12px;
+color: var(–text-dim);
+letter-spacing: 4px;
+text-transform: uppercase;
+margin-bottom: 32px;
+}
+
+.road-preview {
+width: 100%; max-width: 320px;
+height: 120px;
+background: linear-gradient(180deg, #0a1628 0%, #162035 100%);
+border-radius: 12px;
+border: 1px solid var(–lane-line);
+position: relative;
+overflow: hidden;
+margin-bottom: 28px;
+flex-shrink: 0;
+}
+.road-preview::before {
+content: ‘’;
+position: absolute; inset: 0;
+background: repeating-linear-gradient(
+180deg,
+transparent 0px, transparent 14px,
+rgba(255,255,255,0.06) 14px, rgba(255,255,255,0.06) 16px
+);
+animation: roadScroll 0.6s linear infinite;
+}
+.preview-lanes {
+position: absolute; inset: 0;
+display: flex;
+}
+.preview-lane {
+flex:1;
+border-right: 1px dashed rgba(255,255,255,0.08);
+}
+.preview-lane:last-child { border-right: none; }
+.preview-char {
+position: absolute;
+bottom: 20px; left: 50%; transform: translateX(-50%);
+font-size: 32px;
+filter: drop-shadow(0 0 8px rgba(0,212,255,0.6));
+animation: charBounce 0.5s ease-in-out infinite alternate;
+}
+@keyframes charBounce { from{transform:translateX(-50%) translateY(0)} to{transform:translateX(-50%) translateY(-4px)} }
+@keyframes roadScroll { from{background-position:0 0} to{background-position:0 16px} }
+
+.form-group {
+width: 100%; max-width: 320px;
+margin-bottom: 14px;
+}
+.form-group label {
+font-size: 11px;
+color: var(–text-dim);
+letter-spacing: 2px;
+text-transform: uppercase;
+display: block;
+margin-bottom: 6px;
+}
+.form-group input {
+width: 100%;
+background: rgba(255,255,255,0.05);
+border: 1px solid rgba(0,212,255,0.2);
+border-radius: 8px;
+padding: 12px 16px;
+color: var(–text);
+font-size: 16px;
+font-family: ‘Noto Sans KR’, sans-serif;
+outline: none;
+transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-group input:focus {
+border-color: var(–accent);
+box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+}
+
+.btn-start {
+width: 100%; max-width: 320px;
+padding: 16px;
+background: linear-gradient(135deg, var(–accent) 0%, #0099cc 100%);
+border: none;
+border-radius: 12px;
+color: #000;
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 20px;
+letter-spacing: 2px;
+cursor: pointer;
+margin-top: 8px;
+box-shadow: 0 4px 20px rgba(0,212,255,0.3);
+transition: transform 0.1s, box-shadow 0.1s;
+}
+.btn-start:active { transform: scale(0.97); box-shadow: 0 2px 10px rgba(0,212,255,0.2); }
+
+.btn-leaderboard {
+width: 100%; max-width: 320px;
+padding: 12px;
+background: transparent;
+border: 1px solid rgba(0,212,255,0.3);
+border-radius: 12px;
+color: var(–accent);
+font-size: 14px;
+cursor: pointer;
+margin-top: 10px;
+letter-spacing: 1px;
+transition: background 0.2s;
+}
+.btn-leaderboard:active { background: rgba(0,212,255,0.1); }
+
+.items-preview {
+display: flex; gap: 12px;
+margin-bottom: 24px;
+}
+.item-badge {
+display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.item-badge span:first-child { font-size: 22px; }
+.item-badge span:last-child { font-size: 9px; color: var(–text-dim); }
+
+/* ===== GAME SCREEN ===== */
+#gameScreen {
+background: transparent;
+z-index: 1;
+display: flex; flex-direction: column;
+}
+#gameScreen.hidden { display:none; }
+
+/* HUD */
+#hud {
+position: absolute; top: 0; left: 0; right: 0;
+padding: env(safe-area-inset-top, 12px) 16px 12px;
+padding-top: max(env(safe-area-inset-top), 12px);
+background: linear-gradient(180deg, rgba(5,13,26,0.95) 0%, transparent 100%);
+z-index: 5;
+display: flex; justify-content: space-between; align-items: flex-start;
+gap: 8px;
+}
+.hud-score {
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 28px;
+color: var(–accent);
+text-shadow: var(–glow);
+line-height: 1;
+}
+.hud-score-label {
+font-size: 10px; color: var(–text-dim); letter-spacing: 2px;
+}
+.hud-right { text-align: right; }
+
+.item-gauges {
+display: flex; flex-direction: column; gap: 4px;
+min-width: 120px;
+}
+.gauge-row {
+display: flex; align-items: center; gap: 6px;
+opacity: 0;
+transition: opacity 0.3s;
+}
+.gauge-row.active { opacity: 1; }
+.gauge-icon { font-size: 14px; line-height: 1; }
+.gauge-bar {
+flex: 1; height: 5px;
+background: rgba(255,255,255,0.1);
+border-radius: 3px;
+overflow: hidden;
+}
+.gauge-fill {
+height: 100%; border-radius: 3px;
+transition: width 0.1s linear;
+}
+.gauge-fill.helmet { background: var(–warn); }
+.gauge-fill.goggles { background: #88ccff; }
+.gauge-fill.suit { background: var(–accent3); }
+.gauge-fill.boots { background: var(–accent2); }
+
+/* CANVAS */
+#gameCanvas {
+position: absolute; inset: 0;
+width: 100%; height: 100%;
+}
+
+/* EFFECT OVERLAY */
+#effectOverlay {
+position: absolute; inset: 0;
+pointer-events: none; z-index: 4;
+transition: background 0.1s;
+}
+#effectOverlay.smombie-hit {
+background: rgba(255,45,85,0.3);
+animation: screenCrack 0.6s ease-out forwards;
+}
+#effectOverlay.boost {
+background: rgba(0,255,136,0.1);
+}
+@keyframes screenCrack {
+0%{opacity:1} 30%{opacity:0.8} 100%{opacity:0}
+}
+
+#smombieMsg {
+position: absolute;
+top: 50%; left: 50%; transform: translate(-50%, -50%);
+background: var(–danger);
+color: #fff;
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 18px;
+padding: 10px 20px;
+border-radius: 8px;
+letter-spacing: 1px;
+opacity: 0;
+pointer-events: none;
+z-index: 6;
+text-align: center;
+white-space: nowrap;
+}
+#smombieMsg.show {
+animation: msgPop 1.2s ease-out forwards;
+}
+@keyframes msgPop {
+0%{opacity:0;transform:translate(-50%,-50%) scale(0.8)}
+15%{opacity:1;transform:translate(-50%,-50%) scale(1.05)}
+30%{transform:translate(-50%,-50%) scale(1)}
+70%{opacity:1}
+100%{opacity:0;transform:translate(-50%,-60%)}
+}
+
+#itemPickMsg {
+position: absolute;
+top: 40%; left: 50%; transform: translate(-50%, -50%);
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 22px;
+color: var(–accent3);
+text-shadow: 0 0 20px rgba(0,255,136,0.6);
+opacity: 0;
+pointer-events: none;
+z-index: 6;
+text-align: center;
+white-space: nowrap;
+}
+#itemPickMsg.show {
+animation: itemMsgPop 1s ease-out forwards;
+}
+@keyframes itemMsgPop {
+0%{opacity:0;transform:translate(-50%,-50%) translateY(10px)}
+20%{opacity:1;transform:translate(-50%,-50%) translateY(0)}
+70%{opacity:1}
+100%{opacity:0;transform:translate(-50%,-50%) translateY(-20px)}
+}
+
+/* ===== GAME OVER SCREEN ===== */
+#gameOverScreen {
+background: linear-gradient(180deg, #050d1a 0%, #0a1628 100%);
+padding: 24px; gap: 16px;
+}
+
+.go-title {
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 32px;
+color: var(–danger);
+text-shadow: 0 0 20px rgba(255,45,85,0.5);
+letter-spacing: 2px;
+}
+.go-score-big {
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 52px;
+color: var(–accent);
+text-shadow: var(–glow);
+line-height: 1;
+}
+.go-score-label {
+font-size: 11px; color: var(–text-dim); letter-spacing: 3px;
+text-transform: uppercase; margin-bottom: 4px;
+}
+
+.go-stats {
+display: flex; gap: 20px;
+}
+.go-stat {
+display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.go-stat-icon { font-size: 24px; }
+.go-stat-val {
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 20px; color: var(–text);
+}
+.go-stat-label { font-size: 10px; color: var(–text-dim); }
+
+.go-divider {
+width: 100%; max-width: 320px;
+height: 1px; background: rgba(0,212,255,0.15);
+}
+
+.btn-retry {
+width: 100%; max-width: 320px;
+padding: 16px;
+background: linear-gradient(135deg, var(–accent2) 0%, #cc4400 100%);
+border: none; border-radius: 12px;
+color: #fff;
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 20px; letter-spacing: 2px;
+cursor: pointer;
+box-shadow: 0 4px 20px rgba(255,107,53,0.3);
+transition: transform 0.1s;
+}
+.btn-retry:active { transform: scale(0.97); }
+
+.btn-home {
+width: 100%; max-width: 320px;
+padding: 12px;
+background: transparent;
+border: 1px solid rgba(255,255,255,0.15);
+border-radius: 12px;
+color: var(–text-dim);
+font-size: 14px; cursor: pointer;
+transition: border-color 0.2s;
+}
+.btn-home:active { border-color: var(–accent); color: var(–accent); }
+
+/* ===== LEADERBOARD SCREEN ===== */
+#leaderboardScreen {
+background: linear-gradient(180deg, #050d1a 0%, #0a1628 100%);
+padding: 24px; gap: 16px;
+overflow-y: auto;
+}
+
+.lb-title {
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 26px;
+color: var(–accent);
+letter-spacing: 2px;
+}
+
+.lb-table {
+width: 100%; max-width: 360px;
+border-collapse: collapse;
+}
+.lb-table th {
+font-size: 10px; color: var(–text-dim);
+letter-spacing: 2px; text-transform: uppercase;
+padding: 8px 12px; border-bottom: 1px solid rgba(0,212,255,0.15);
+text-align: left;
+}
+.lb-table td {
+padding: 10px 12px;
+font-size: 14px;
+border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.lb-rank {
+font-family: ‘Black Han Sans’, sans-serif;
+color: var(–text-dim); font-size: 16px;
+}
+.lb-rank.gold { color: #ffd700; }
+.lb-rank.silver { color: #c0c0c0; }
+.lb-rank.bronze { color: #cd7f32; }
+.lb-name { font-weight: 700; }
+.lb-dept { font-size: 12px; color: var(–text-dim); }
+.lb-score {
+font-family: ‘Black Han Sans’, sans-serif;
+color: var(–accent); text-align: right;
+}
+
+.lb-empty {
+color: var(–text-dim); font-size: 14px;
+padding: 20px; text-align: center;
+}
+
+.btn-back {
+width: 100%; max-width: 320px;
+padding: 12px;
+background: transparent;
+border: 1px solid rgba(0,212,255,0.3);
+border-radius: 12px;
+color: var(–accent); font-size: 14px;
+cursor: pointer; letter-spacing: 1px;
+}
+
+/* COUNTDOWN */
+#countdown {
+position: absolute; inset: 0;
+display: flex; align-items: center; justify-content: center;
+z-index: 8;
+pointer-events: none;
+}
+#countdownNum {
+font-family: ‘Black Han Sans’, sans-serif;
+font-size: 120px;
+color: var(–accent);
+text-shadow: var(–glow);
+opacity: 0;
+}
+
+/* PAUSE BUTTON */
+#pauseBtn {
+position: absolute;
+top: max(env(safe-area-inset-top), 12px);
+right: 16px;
+width: 36px; height: 36px;
+background: rgba(255,255,255,0.08);
+border: 1px solid rgba(255,255,255,0.12);
+border-radius: 8px;
+color: var(–text-dim);
+font-size: 16px;
+cursor: pointer;
+z-index: 7;
+display: flex; align-items: center; justify-content: center;
+}
+
+/* GOGGLES OVERLAY */
+#gogglesOverlay {
+position: absolute; inset: 0;
+pointer-events: none; z-index: 3;
+background: radial-gradient(ellipse at center, transparent 40%, rgba(0,5,15,0.7) 100%);
+opacity: 0; transition: opacity 0.5s;
+}
+#gogglesOverlay.active { opacity: 1; }
+
+/* SUIT FLASH */
+#suitOverlay {
+position: absolute; inset: 0;
+pointer-events: none; z-index: 3;
+background: rgba(0,255,136,0.08);
+opacity: 0; transition: opacity 0.3s;
+}
+#suitOverlay.active { opacity: 1; }
+</style>
+
+</head>
+<body>
+
+<!-- START SCREEN -->
+
+<div class="screen" id="startScreen">
+  <div class="start-logo">안전런</div>
+  <div class="start-sub">TEK Safety Run</div>
+
+  <div class="road-preview">
+    <div class="preview-lanes">
+      <div class="preview-lane"></div>
+      <div class="preview-lane"></div>
+      <div class="preview-lane"></div>
+    </div>
+    <div class="preview-char">🏃</div>
+  </div>
+
+  <div class="items-preview">
+    <div class="item-badge"><span>⛑️</span><span>안전모</span></div>
+    <div class="item-badge"><span>🥽</span><span>보안경</span></div>
+    <div class="item-badge"><span>🦺</span><span>내화학복</span></div>
+    <div class="item-badge"><span>👟</span><span>안전화</span></div>
+  </div>
+
+  <div class="form-group">
+    <label>부서</label>
+    <input type="text" id="deptInput" placeholder="예: SHE팀" maxlength="20">
+  </div>
+  <div class="form-group">
+    <label>이름</label>
+    <input type="text" id="nameInput" placeholder="이름을 입력하세요" maxlength="10">
+  </div>
+
+<button class="btn-start" onclick="startGame()">게임 시작 🚀</button>
+<button class="btn-leaderboard" onclick="showLeaderboard()">🏆 순위표 보기</button>
+
+</div>
+
+<!-- GAME SCREEN -->
+
+<div class="screen hidden" id="gameScreen">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- HUD -->
+
+  <div id="hud">
+    <div>
+      <div class="hud-score-label">SCORE</div>
+      <div class="hud-score" id="scoreDisplay">0</div>
+    </div>
+    <div class="item-gauges" id="itemGauges">
+      <div class="gauge-row" id="gaugeHelmet">
+        <span class="gauge-icon">⛑️</span>
+        <div class="gauge-bar"><div class="gauge-fill helmet" id="fillHelmet" style="width:100%"></div></div>
+      </div>
+      <div class="gauge-row" id="gaugeGoggles">
+        <span class="gauge-icon">🥽</span>
+        <div class="gauge-bar"><div class="gauge-fill goggles" id="fillGoggles" style="width:100%"></div></div>
+      </div>
+      <div class="gauge-row" id="gaugeSuit">
+        <span class="gauge-icon">🦺</span>
+        <div class="gauge-bar"><div class="gauge-fill suit" id="fillSuit" style="width:100%"></div></div>
+      </div>
+      <div class="gauge-row" id="gaugeBoots">
+        <span class="gauge-icon">👟</span>
+        <div class="gauge-bar"><div class="gauge-fill boots" id="fillBoots" style="width:100%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlays -->
+
+  <div id="gogglesOverlay"></div>
+  <div id="suitOverlay"></div>
+  <div id="effectOverlay"></div>
+  <div id="smombieMsg">📵 보행자 보호 위반!<br>-500점</div>
+  <div id="itemPickMsg"></div>
+
+  <!-- Countdown -->
+
+  <div id="countdown"><div id="countdownNum"></div></div>
+</div>
+
+<!-- GAME OVER SCREEN -->
+
+<div class="screen hidden" id="gameOverScreen">
+  <div class="go-title">💥 GAME OVER</div>
+  <div>
+    <div class="go-score-label">FINAL SCORE</div>
+    <div class="go-score-big" id="finalScore">0</div>
+  </div>
+
+  <div class="go-stats">
+    <div class="go-stat">
+      <div class="go-stat-icon">📏</div>
+      <div class="go-stat-val" id="finalDist">0m</div>
+      <div class="go-stat-label">거리</div>
+    </div>
+    <div class="go-stat">
+      <div class="go-stat-icon">⛑️</div>
+      <div class="go-stat-val" id="finalHelmet">0</div>
+      <div class="go-stat-label">안전모</div>
+    </div>
+    <div class="go-stat">
+      <div class="go-stat-icon">🥽</div>
+      <div class="go-stat-val" id="finalGoggles">0</div>
+      <div class="go-stat-label">보안경</div>
+    </div>
+    <div class="go-stat">
+      <div class="go-stat-icon">🦺</div>
+      <div class="go-stat-val" id="finalSuit">0</div>
+      <div class="go-stat-label">내화학복</div>
+    </div>
+    <div class="go-stat">
+      <div class="go-stat-icon">👟</div>
+      <div class="go-stat-val" id="finalBoots">0</div>
+      <div class="go-stat-label">안전화</div>
+    </div>
+  </div>
+
+  <div class="go-divider"></div>
+  <button class="btn-retry" onclick="retryGame()">다시 도전 🔄</button>
+  <button class="btn-home" onclick="goHome()">🏠 처음으로</button>
+</div>
+
+<!-- LEADERBOARD SCREEN -->
+
+<div class="screen hidden" id="leaderboardScreen">
+  <div class="lb-title">🏆 명예의 전당</div>
+  <table class="lb-table">
+    <thead>
+      <tr>
+        <th>순위</th>
+        <th>이름 / 부서</th>
+        <th style="text-align:right">점수</th>
+      </tr>
+    </thead>
+    <tbody id="lbBody">
+      <tr><td colspan="3" class="lb-empty">아직 기록이 없어요</td></tr>
+    </tbody>
+  </table>
+  <div class="go-divider"></div>
+  <button class="btn-back" onclick="backFromLeaderboard()">← 돌아가기</button>
+</div>
+
+<!-- ============================================================
+  FIREBASE CONFIG (주석 해제 후 본인 config 입력)
+  ============================================================
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  window.saveScoreToFirebase = async (name, dept, score) => {
+    try {
+      await addDoc(collection(db, "scores"), {
+        name, dept, score, timestamp: Date.now()
+      });
+    } catch(e) { console.error("저장 실패:", e); }
+  };
+
+  window.loadLeaderboard = async () => {
+    try {
+      const q = query(collection(db, "scores"), orderBy("score","desc"), limit(10));
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data());
+    } catch(e) { console.error("불러오기 실패:", e); return []; }
+  };
+}
+</script>
+============================================================ -->
+
+<script>
+// =============================================
+// GAME STATE
+// =============================================
+const LANES = 3;
+let canvas, ctx;
+let W, H;
+let gameState = 'idle'; // idle | countdown | playing | over
+let score = 0;
+let distance = 0;
+let speed = 3.5;
+let frameCount = 0;
+let animId = null;
+let playerLane = 1; // 0,1,2
+let targetLane = 1;
+let laneX = 0; // actual pixel x of player
+let playerY = 0;
+let laneWidth = 0;
+
+// Player info
+let playerName = '';
+let playerDept = '';
+
+// Items collected count
+let itemCount = { helmet:0, goggles:0, suit:0, boots:0 };
+
+// Active power-ups: { helmet: bool, goggles: bool, suit: bool, boots: bool }
+let powers = { helmet:false, goggles:false, suit:false, boots:false };
+let powerTimers = { helmet:0, goggles:0, suit:0, boots:0 };
+const POWER_DURATION = { helmet:0, goggles:8000, suit:3000, boots:7000 }; // ms; helmet is one-shot
+
+// Obstacles array: { lane, y, type, emoji, w, h }
+let obstacles = [];
+// Items array: { lane, y, type, emoji }
+let items = [];
+
+// Road scroll
+let roadOffset = 0;
+
+// Swipe tracking
+let touchStartX = 0;
+let touchStartY = 0;
+let swipeLocked = false;
+
+// Ground debris timer
+let debrisTimer = 0;
+
+// Smombie hit flash
+let smombieHitTimer = 0;
+
+// Lane change animation
+let laneChangeAnim = 0; // 0..1
+let laneChangeDir = 0; // -1, 0, 1
+let prevLaneX = 0;
+
+// =============================================
+// INIT
+// =============================================
+function init() {
+  canvas = document.getElementById('gameCanvas');
+  ctx = canvas.getContext('2d');
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Swipe
+  canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+  canvas.addEventListener('touchend', onTouchEnd, { passive: true });
+  // Mouse fallback
+  canvas.addEventListener('mousedown', e => { touchStartX = e.clientX; touchStartY = e.clientY; });
+  canvas.addEventListener('mouseup', e => {
+    const dx = e.clientX - touchStartX;
+    const dy = e.clientY - touchStartY;
+    if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30) {
+      changeLane(dx > 0 ? 1 : -1);
+    }
+  });
+  // Arrow keys
+  window.addEventListener('keydown', e => {
+    if(gameState !== 'playing') return;
+    if(e.key === 'ArrowLeft') changeLane(-1);
+    if(e.key === 'ArrowRight') changeLane(1);
+  });
+}
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  laneWidth = W / LANES;
+  playerY = H * 0.72;
+  laneX = laneWidth * playerLane + laneWidth / 2;
+  prevLaneX = laneX;
+}
+
+// =============================================
+// TOUCH
+// =============================================
+function onTouchStart(e) {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+  swipeLocked = false;
+}
+function onTouchEnd(e) {
+  if(gameState !== 'playing') return;
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 30 && !swipeLocked) {
+    swipeLocked = true;
+    changeLane(dx > 0 ? 1 : -1);
+  }
+}
+
+function changeLane(dir) {
+  const newLane = Math.max(0, Math.min(LANES - 1, playerLane + dir));
+  if(newLane !== playerLane) {
+    prevLaneX = laneX;
+    playerLane = newLane;
+    targetLane = newLane;
+    laneChangeAnim = 0;
+    laneChangeDir = dir;
+  }
+}
+
+// =============================================
+// GAME FLOW
+// =============================================
+function startGame() {
+  playerName = document.getElementById('nameInput').value.trim() || '익명';
+  playerDept = document.getElementById('deptInput').value.trim() || '미입력';
+  showScreen('gameScreen');
+  resetGame();
+  runCountdown();
+}
+
+function resetGame() {
+  score = 0;
+  distance = 0;
+  speed = 3.5;
+  frameCount = 0;
+  playerLane = 1;
+  targetLane = 1;
+  laneX = laneWidth * 1 + laneWidth / 2;
+  prevLaneX = laneX;
+  laneChangeAnim = 1;
+  obstacles = [];
+  items = [];
+  roadOffset = 0;
+  debrisTimer = 0;
+  powers = { helmet:false, goggles:false, suit:false, boots:false };
+  powerTimers = { helmet:0, goggles:0, suit:0, boots:0 };
+  itemCount = { helmet:0, goggles:0, suit:0, boots:0 };
+  updateGauges();
+  document.getElementById('scoreDisplay').textContent = '0';
+  document.getElementById('gogglesOverlay').classList.remove('active');
+  document.getElementById('suitOverlay').classList.remove('active');
+  smombieHitTimer = 0;
+}
+
+function runCountdown() {
+  gameState = 'countdown';
+  const el = document.getElementById('countdownNum');
+  let n = 3;
+  el.style.opacity = 0;
+  const tick = () => {
+    el.textContent = n > 0 ? n : 'GO!';
+    el.style.opacity = 1;
+    el.style.transition = 'none';
+    setTimeout(() => {
+      el.style.transition = 'opacity 0.4s';
+      el.style.opacity = 0;
+      n--;
+      if(n >= 0) setTimeout(tick, 600);
+      else {
+        el.textContent = '';
+        gameState = 'playing';
+        if(animId) cancelAnimationFrame(animId);
+        lastTime = performance.now();
+        animId = requestAnimationFrame(gameLoop);
+      }
+    }, 400);
+  };
+  tick();
+}
+
+function retryGame() {
+  showScreen('gameScreen');
+  resetGame();
+  runCountdown();
+}
+
+function goHome() {
+  showScreen('startScreen');
+  if(animId) { cancelAnimationFrame(animId); animId = null; }
+}
+
+function showLeaderboard() {
+  showScreen('leaderboardScreen');
+  renderLeaderboard();
+}
+
+function backFromLeaderboard() {
+  showScreen('startScreen');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  const el = document.getElementById(id);
+  el.classList.remove('hidden');
+  if(id === 'gameScreen') el.style.display = 'flex';
+}
+
+// =============================================
+// GAME LOOP
+// =============================================
+let lastTime = 0;
+let deltaTime = 16;
+
+function gameLoop(ts) {
+  deltaTime = Math.min(ts - lastTime, 50);
+  lastTime = ts;
+
+  if(gameState !== 'playing') return;
+
+  update(deltaTime);
+  draw();
+
+  animId = requestAnimationFrame(gameLoop);
+}
+
+// =============================================
+// UPDATE
+// =============================================
+function update(dt) {
+  frameCount++;
+
+  // Speed ramp
+  speed = 3.5 + distance / 800;
+  if(speed > 14) speed = 14;
+
+  // Score & distance
+  distance += speed * 0.12;
+  score += Math.floor(speed * 0.8);
+  document.getElementById('scoreDisplay').textContent = score.toLocaleString();
+
+  // Road scroll
+  roadOffset = (roadOffset + speed * 1.2) % (H * 0.08);
+
+  // Lane change smooth
+  const targetX = laneWidth * playerLane + laneWidth / 2;
+  laneX += (targetX - laneX) * Math.min(1, dt * 0.018);
+
+  // Spawn obstacles
+  const spawnInterval = Math.max(28, 70 - distance / 60);
+  if(frameCount % Math.floor(spawnInterval) === 0) spawnObstacle();
+
+  // Spawn items
+  const itemInterval = Math.max(80, 150 - distance / 100);
+  if(frameCount % Math.floor(itemInterval) === 0) spawnItem();
+
+  // Move obstacles
+  for(let i = obstacles.length - 1; i >= 0; i--) {
+    obstacles[i].y += speed * 1.1;
+    if(obstacles[i].y > H + 60) obstacles.splice(i, 1);
+  }
+
+  // Move items
+  for(let i = items.length - 1; i >= 0; i--) {
+    items[i].y += speed * 0.9;
+    if(items[i].y > H + 60) items.splice(i, 1);
+  }
+
+  // Collision: obstacles
+  for(let i = obstacles.length - 1; i >= 0; i--) {
+    const ob = obstacles[i];
+    if(Math.abs(ob.y - playerY) < 36 && ob.lane === playerLane) {
+      if(ob.type === 'smombie') {
+        // Smombie: -500 score, flash
+        obstacles.splice(i, 1);
+        score = Math.max(0, score - 500);
+        showSmombieMsg();
+      } else if(ob.type === 'debris') {
+        // Ground debris
+        if(powers.boots) {
+          obstacles.splice(i, 1); // ignore
+        } else if(powers.suit) {
+          obstacles.splice(i, 1); // destroy
+        } else {
+          gameOver();
+          return;
+        }
+      } else {
+        // Normal obstacle
+        if(powers.suit) {
+          obstacles.splice(i, 1); // destroy
+        } else if(powers.helmet) {
+          powers.helmet = false;
+          updateGauges();
+          obstacles.splice(i, 1);
+          showPickMsg('⛑️ 안전모가 막아줬다!', '#ffcc00');
+        } else {
+          gameOver();
+          return;
+        }
+      }
+    }
+  }
+
+  // Collision: items
+  for(let i = items.length - 1; i >= 0; i--) {
+    const it = items[i];
+    if(Math.abs(it.y - playerY) < 34 && it.lane === playerLane) {
+      items.splice(i, 1);
+      activatePower(it.type);
+    }
+  }
+
+  // Power timers
+  const types = ['goggles','suit','boots'];
+  for(const t of types) {
+    if(powers[t]) {
+      powerTimers[t] -= dt;
+      if(powerTimers[t] <= 0) {
+        powers[t] = false;
+        powerTimers[t] = 0;
+        updateGauges();
+        if(t === 'goggles') document.getElementById('gogglesOverlay').classList.remove('active');
+        if(t === 'suit') document.getElementById('suitOverlay').classList.remove('active');
+      } else {
+        updateGaugeBar(t, powerTimers[t] / POWER_DURATION[t]);
+      }
+    }
+  }
+
+  // Smombie hit fade
+  if(smombieHitTimer > 0) {
+    smombieHitTimer -= dt;
+    if(smombieHitTimer <= 0) {
+      document.getElementById('effectOverlay').className = '';
+    }
+  }
+}
+
+// =============================================
+// SPAWN
+// =============================================
+const OBSTACLE_TYPES = [
+  { type:'drum', emoji:'🛢️', label:'드럼통' },
+  { type:'gear', emoji:'⚙️', label:'고장난 장비' },
+  { type:'cone', emoji:'🚧', label:'공사 장벽' },
+  { type:'box', emoji:'📦', label:'낙하 화물' },
+  { type:'smombie', emoji:'🧟', label:'스몸비' },
+  { type:'debris', emoji:'💥', label:'바닥파편' },
+];
+
+function spawnObstacle() {
+  const usedLanes = obstacles.filter(o => o.y < 80).map(o => o.lane);
+  const avail = [0,1,2].filter(l => !usedLanes.includes(l));
+  if(avail.length === 0) return;
+  const lane = avail[Math.floor(Math.random() * avail.length)];
+
+  let pool = [...OBSTACLE_TYPES];
+  // More smombies as distance increases
+  if(distance > 300) pool.push({ type:'smombie', emoji:'🧟', label:'스몸비' });
+  if(distance > 600) pool.push({ type:'debris', emoji:'💥', label:'바닥파편' });
+
+  const t = pool[Math.floor(Math.random() * pool.length)];
+  obstacles.push({ lane, y: -40, type: t.type, emoji: t.emoji });
+}
+
+const ITEM_TYPES = [
+  { type:'helmet', emoji:'⛑️' },
+  { type:'goggles', emoji:'🥽' },
+  { type:'suit', emoji:'🦺' },
+  { type:'boots', emoji:'👟' },
+];
+
+function spawnItem() {
+  const lane = Math.floor(Math.random() * LANES);
+  const t = ITEM_TYPES[Math.floor(Math.random() * ITEM_TYPES.length)];
+  items.push({ lane, y: -40, type: t.type, emoji: t.emoji });
+}
+
+// =============================================
+// POWERS
+// =============================================
+function activatePower(type) {
+  powers[type] = true;
+  itemCount[type]++;
+
+  if(type === 'helmet') {
+    // One-shot, no timer
+    updateGauges();
+    showPickMsg('⛑️ 안전모 장착!', '#ffcc00');
+  } else if(type === 'goggles') {
+    powerTimers.goggles = POWER_DURATION.goggles;
+    updateGauges();
+    document.getElementById('gogglesOverlay').classList.add('active');
+    showPickMsg('🥽 시야 확장!', '#88ccff');
+  } else if(type === 'suit') {
+    powerTimers.suit = POWER_DURATION.suit;
+    updateGauges();
+    document.getElementById('suitOverlay').classList.add('active');
+    showPickMsg('🦺 무적 3초!', '#00ff88');
+  } else if(type === 'boots') {
+    powerTimers.boots = POWER_DURATION.boots;
+    updateGauges();
+    showPickMsg('👟 안전화 장착!', '#ff6b35');
+  }
+}
+
+function updateGauges() {
+  // Helmet
+  const hRow = document.getElementById('gaugeHelmet');
+  hRow.classList.toggle('active', powers.helmet);
+  document.getElementById('fillHelmet').style.width = powers.helmet ? '100%' : '0%';
+
+  // Others
+  ['goggles','suit','boots'].forEach(t => {
+    const row = document.getElementById('gauge' + t.charAt(0).toUpperCase() + t.slice(1));
+    row.classList.toggle('active', powers[t]);
+  });
+}
+
+function updateGaugeBar(type, ratio) {
+  const id = 'fill' + type.charAt(0).toUpperCase() + type.slice(1);
+  document.getElementById(id).style.width = (ratio * 100) + '%';
+}
+
+// =============================================
+// MESSAGES
+// =============================================
+function showSmombieMsg() {
+  smombieHitTimer = 600;
+  const ov = document.getElementById('effectOverlay');
+  ov.className = '';
+  void ov.offsetWidth;
+  ov.classList.add('smombie-hit');
+
+  const msg = document.getElementById('smombieMsg');
+  msg.className = '';
+  void msg.offsetWidth;
+  msg.classList.add('show');
+  setTimeout(() => msg.className = '', 1300);
+}
+
+function showPickMsg(text, color) {
+  const msg = document.getElementById('itemPickMsg');
+  msg.textContent = text;
+  msg.style.color = color;
+  msg.style.textShadow = `0 0 20px ${color}88`;
+  msg.className = '';
+  void msg.offsetWidth;
+  msg.classList.add('show');
+  setTimeout(() => msg.className = '', 1100);
+}
+
+// =============================================
+// DRAW
+// =============================================
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  drawRoad();
+  drawLaneLines();
+  drawItems();
+  drawObstacles();
+  drawPlayer();
+}
+
+function drawRoad() {
+  // Road bg
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#070e1c');
+  grad.addColorStop(1, '#0e1c32');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // Moving road stripes
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = W;
+  const stripeH = H * 0.08;
+  for(let y = -stripeH + roadOffset; y < H + stripeH; y += stripeH * 1.5) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y + 2);
+    ctx.stroke();
+  }
+
+  // Edge glow
+  const leftGrad = ctx.createLinearGradient(0, 0, laneWidth * 0.3, 0);
+  leftGrad.addColorStop(0, 'rgba(0,212,255,0.05)');
+  leftGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = leftGrad;
+  ctx.fillRect(0, 0, laneWidth * 0.3, H);
+
+  const rightGrad = ctx.createLinearGradient(W, 0, W - laneWidth * 0.3, 0);
+  rightGrad.addColorStop(0, 'rgba(0,212,255,0.05)');
+  rightGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = rightGrad;
+  ctx.fillRect(W - laneWidth * 0.3, 0, laneWidth * 0.3, H);
+}
+
+function drawLaneLines() {
+  ctx.strokeStyle = 'rgba(0,212,255,0.12)';
+  ctx.setLineDash([H * 0.06, H * 0.04]);
+  ctx.lineDashOffset = -roadOffset * 2;
+  ctx.lineWidth = 2;
+
+  for(let i = 1; i < LANES; i++) {
+    const x = laneWidth * i;
+    ctx.beginPath();
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, H);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // Perspective lines from bottom center
+  ctx.strokeStyle = 'rgba(0,212,255,0.04)';
+  ctx.lineWidth = 1;
+  const vanishX = W / 2, vanishY = H * 0.1;
+  for(let i = 0; i <= LANES; i++) {
+    const bx = laneWidth * i;
+    ctx.beginPath();
+    ctx.moveTo(vanishX + (bx - vanishX) * 0.3, vanishY);
+    ctx.lineTo(bx, H);
+    ctx.stroke();
+  }
+}
+
+function drawObstacles() {
+  for(const ob of obstacles) {
+    const x = laneWidth * ob.lane + laneWidth / 2;
+    const y = ob.y;
+    const size = ob.type === 'smombie' ? 34 : 30;
+
+    // Shadow
+    ctx.save();
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(x, y + 16, 18, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    // Highlight smombie
+    if(ob.type === 'smombie') {
+      ctx.save();
+      ctx.globalAlpha = 0.15 + 0.1 * Math.sin(frameCount * 0.15);
+      ctx.fillStyle = '#ff2d55';
+      ctx.beginPath();
+      ctx.arc(x, y, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    ctx.font = `${size}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ob.emoji, x, y);
+
+    // Goggles highlight
+    if(powers.goggles && ob.y < H * 0.6) {
+      ctx.save();
+      ctx.strokeStyle = ob.type === 'smombie' ? '#ff2d55' : '#ffcc00';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.6 + 0.3 * Math.sin(frameCount * 0.2);
+      ctx.beginPath();
+      ctx.arc(x, y, 26, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+function drawItems() {
+  for(const it of items) {
+    const x = laneWidth * it.lane + laneWidth / 2;
+    const y = it.y;
+
+    // Glow
+    ctx.save();
+    ctx.globalAlpha = 0.2 + 0.1 * Math.sin(frameCount * 0.12);
+    ctx.fillStyle = '#00ff88';
+    ctx.beginPath();
+    ctx.arc(x, y, 22, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    ctx.font = '26px serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(it.emoji, x, y);
+
+    // Highlight with goggles
+    if(powers.goggles) {
+      ctx.save();
+      ctx.strokeStyle = '#00ff88';
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.8;
+      ctx.beginPath();
+      ctx.arc(x, y, 24, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
+function drawPlayer() {
+  const x = laneX;
+  const y = playerY;
+
+  // Shadow
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = 'rgba(0,0,0,0.6)';
+  ctx.beginPath();
+  ctx.ellipse(x, y + 20, 16, 7, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Suit aura
+  if(powers.suit) {
+    ctx.save();
+    ctx.globalAlpha = 0.4 + 0.2 * Math.sin(frameCount * 0.25);
+    const gr = ctx.createRadialGradient(x, y, 10, x, y, 36);
+    gr.addColorStop(0, '#00ff88');
+    gr.addColorStop(1, 'transparent');
+    ctx.fillStyle = gr;
+    ctx.beginPath();
+    ctx.arc(x, y, 36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Helmet shield
+  if(powers.helmet) {
+    ctx.save();
+    ctx.strokeStyle = '#ffcc00';
+    ctx.lineWidth = 3;
+    ctx.globalAlpha = 0.5 + 0.3 * Math.sin(frameCount * 0.3);
+    ctx.beginPath();
+    ctx.arc(x, y, 30, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  // Player emoji
+  const bounce = Math.sin(frameCount * 0.28) * 3;
+  ctx.font = '36px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('🏃', x, y + bounce);
+
+  // Speed lines
+  if(speed > 7) {
+    ctx.save();
+    ctx.globalAlpha = Math.min(0.4, (speed - 7) / 14);
+    ctx.strokeStyle = var2hex('--accent');
+    ctx.lineWidth = 1.5;
+    for(let i = 0; i < 4; i++) {
+      const ly = y - 10 + i * 10;
+      const len = 16 + speed * 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 20, ly);
+      ctx.lineTo(x - 20 - len, ly);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+}
+
+function var2hex(v) {
+  // Returns hardcoded colors for canvas
+  return v === '--accent' ? '#00d4ff' : '#ffffff';
+}
+
+// =============================================
+// GAME OVER
+// =============================================
+function gameOver() {
+  gameState = 'over';
+  if(animId) { cancelAnimationFrame(animId); animId = null; }
+
+  // Save score
+  if(typeof window.saveScoreToFirebase === 'function') {
+    window.saveScoreToFirebase(playerName, playerDept, score);
+  } else {
+    saveLocalScore(playerName, playerDept, score);
+  }
+
+  // Show game over screen
+  setTimeout(() => {
+    document.getElementById('finalScore').textContent = score.toLocaleString();
+    document.getElementById('finalDist').textContent = Math.floor(distance) + 'm';
+    document.getElementById('finalHelmet').textContent = itemCount.helmet;
+    document.getElementById('finalGoggles').textContent = itemCount.goggles;
+    document.getElementById('finalSuit').textContent = itemCount.suit;
+    document.getElementById('finalBoots').textContent = itemCount.boots;
+    showScreen('gameOverScreen');
+  }, 400);
+
+  // Flash
+  const ov = document.getElementById('effectOverlay');
+  ov.style.background = 'rgba(255,45,85,0.5)';
+  setTimeout(() => { ov.style.background = ''; }, 300);
+}
+
+// =============================================
+// LOCAL STORAGE (Firebase 미연동 시 로컬 저장)
+// =============================================
+function saveLocalScore(name, dept, sc) {
+  try {
+    const key = 'safetyrun_scores';
+    const scores = JSON.parse(localStorage.getItem(key) || '[]');
+    scores.push({ name, dept, score: sc, timestamp: Date.now() });
+    scores.sort((a,b) => b.score - a.score);
+    const top10 = scores.slice(0, 10);
+    localStorage.setItem(key, JSON.stringify(top10));
+  } catch(e) {}
+}
+
+function getLocalScores() {
+  try {
+    return JSON.parse(localStorage.getItem('safetyrun_scores') || '[]');
+  } catch(e) { return []; }
+}
+
+async function renderLeaderboard() {
+  const tbody = document.getElementById('lbBody');
+  tbody.innerHTML = '';
+
+  let scores = [];
+  if(typeof window.loadLeaderboard === 'function') {
+    scores = await window.loadLeaderboard();
+  } else {
+    scores = getLocalScores();
+  }
+
+  if(scores.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="lb-empty">아직 기록이 없어요 🏃</td></tr>';
+    return;
+  }
+
+  scores.forEach((s, i) => {
+    const tr = document.createElement('tr');
+    const rankClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '';
+    tr.innerHTML = `
+      <td class="lb-rank ${rankClass}">${medal || (i+1)}</td>
+      <td><div class="lb-name">${s.name}</div><div class="lb-dept">${s.dept}</div></td>
+      <td class="lb-score">${s.score.toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// =============================================
+// BOOTSTRAP
+// =============================================
+window.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
