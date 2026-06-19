@@ -259,7 +259,7 @@ function buildScene(){
   while(scene.children.length) scene.remove(scene.children[0]);
 
   scene.background=new THREE.Color(0x1a0a3a);
-  scene.fog=new THREE.Fog(0x1a0a3a,90,260);
+  scene.fog=new THREE.Fog(0xb0dff0,90,260);
 
   // 조명
   scene.add(new THREE.AmbientLight(0xffffff,0.8));
@@ -269,7 +269,7 @@ function buildScene(){
 
   // 넓은 잔디
   const gGeo=new THREE.PlaneGeometry(600,600);
-  const gMat=new THREE.MeshLambertMaterial({color:0x44bb22});
+  const gMat=new THREE.MeshLambertMaterial({color:0x55cc33});
   const grass=new THREE.Mesh(gGeo,gMat);
   grass.rotation.x=-Math.PI/2; grass.position.y=-0.05;
   scene.add(grass);
@@ -532,8 +532,17 @@ function update(dt){
   const tilt=kL?0.12:kR?-0.12:0;
   carMesh.rotation.z+=(tilt-carMesh.rotation.z)*0.15;
 
-  // 차량 도로 이탈 시 감속
-  if(Math.abs(carX)>ROAD_W/2) spd*=0.93;
+  // 차량 도로 이탈 시 감속 + 강제 복귀
+  const BOUND = ROAD_W/2 - 0.5; // 도로 경계
+  if(Math.abs(carX)>BOUND){
+    spd*=0.90;
+    // 경계 밖이면 중앙 방향으로 강하게 밀어냄
+    const pushBack = (carX>0?-1:1)*0.18;
+    tCarX+=pushBack;
+    tCarX=Math.max(-BOUND, Math.min(BOUND, tCarX));
+    // 튕기는 느낌
+    if(Math.abs(carX)>BOUND+0.5) tCarX*=0.5;
+  }
 
   // 전진
   const mv=spd*0.36*(dt/16);
@@ -632,15 +641,15 @@ function render3D(){
   camera.position.z=carMesh.position.z+12;
   camera.lookAt(carMesh.position.x*0.3,1.2,carMesh.position.z-20);
 
-  // 이벤트 하늘/안개
-  let skyC=0x1a0a3a, fogC=0x1a0a3a, fogN=90, fogF=260;
+  // 이벤트 하늘/안개 (기본: 밝은 하늘색 낮)
+  let skyC=0x87ceeb, fogC=0xb0dff0, fogN=90, fogF=260;
   if(evActive&&curEv){
-    if(curEv.id==='hail') {skyC=0x283848;fogC=0x283848;}
-    if(curEv.id==='acid') {skyC=0x0e2a0a;fogC=0x0e2a0a;}
-    if(curEv.id==='thorn'){skyC=0x2a1808;fogC=0x2a1808;}
-    if(curEv.id==='fog')  {skyC=0x888880;fogC=0x888880;fogN=15;fogF=55;}
-    if(curEv.id==='sand') {skyC=0x382808;fogC=0x382808;}
-    if(curEv.id==='dark') {skyC=0x000008;fogC=0x000008;fogN=8;fogF=30;}
+    if(curEv.id==='hail') {skyC=0x8899aa;fogC=0x99aabb;}
+    if(curEv.id==='acid') {skyC=0x6aaa44;fogC=0x88cc66;}
+    if(curEv.id==='thorn'){skyC=0xcc8844;fogC=0xddaa66;}
+    if(curEv.id==='fog')  {skyC=0xccccbb;fogC=0xddddcc;fogN=15;fogF=55;}
+    if(curEv.id==='sand') {skyC=0xddaa44;fogC=0xeebb66;}
+    if(curEv.id==='dark') {skyC=0x111122;fogC=0x111122;fogN=8;fogF=30;}
   }
   scene.background=new THREE.Color(skyC);
   scene.fog.color.set(fogC);scene.fog.near=fogN;scene.fog.far=fogF;
@@ -759,7 +768,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   resize();
   window.addEventListener('resize',resize);
   // 초기 씬 렌더
-  scene.background=new THREE.Color(0x1a0a3a);
+  scene.background=new THREE.Color(0x87ceeb);
   renderer.render(scene,camera);
 });
 </script>
