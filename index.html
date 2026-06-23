@@ -263,17 +263,10 @@ body{background:#87ceeb;color:#fff;font-family:'Noto Sans KR',sans-serif;overflo
     <div class="go-st"><div class="go-si">👟</div><div class="go-sv" id="fBc">0</div><div class="go-sl2">안전화</div></div>
   </div>
   <div class="div"></div>
-  <!-- 부서별 랭킹 -->
-  <div class="dept-rank-title">🏢 부서 랭킹</div>
-  <table class="dept-table">
-    <thead><tr><th>순위</th><th>부서</th><th>최고점</th><th>참여</th></tr></thead>
-    <tbody id="deptBody"></tbody>
-  </table>
-  <div class="div"></div>
-  <!-- 전체 Top 10 -->
-  <div class="all-rank-title">👑 전체 랭킹 Top 10</div>
+  <!-- 통합 랭킹 (부서 + 개인) -->
+  <div class="all-rank-title">🏆 랭킹 TOP 10</div>
   <table class="lbt">
-    <thead><tr><th>순위</th><th>이름 / 부서</th><th style="text-align:right">점수</th></tr></thead>
+    <thead><tr><th>순위</th><th>부서 · 이름</th><th style="text-align:right">점수</th></tr></thead>
     <tbody id="goLbBody"></tbody>
   </table>
   <div class="div"></div>
@@ -288,11 +281,8 @@ body{background:#87ceeb;color:#fff;font-family:'Noto Sans KR',sans-serif;overflo
 
 <div class="screen hidden" id="lbScreen">
   <div class="lb-t">🏆 명예의 전당</div>
-  <div class="dept-rank-title" style="margin-bottom:6px">🏢 부서 랭킹</div>
-  <table class="dept-table"><thead><tr><th>순위</th><th>부서</th><th>최고점</th><th>참여</th></tr></thead><tbody id="lbDeptBody"></tbody></table>
-  <div class="div" style="margin:8px 0"></div>
-  <div class="all-rank-title" style="margin-bottom:4px">👑 개인 Top 10</div>
-  <table class="lbt"><thead><tr><th>순위</th><th>이름 / 부서</th><th style="text-align:right">점수</th></tr></thead><tbody id="lbBody"></tbody></table>
+  <div class="all-rank-title" style="margin-bottom:6px">🏆 랭킹 TOP 20</div>
+  <table class="lbt"><thead><tr><th>순위</th><th>부서 · 이름</th><th style="text-align:right">점수</th></tr></thead><tbody id="lbBody"></tbody></table>
   <button class="btn-bk" onclick="backLB()">← 돌아가기</button>
 </div>
 
@@ -400,7 +390,7 @@ function buildScene(){
   scene.add(new THREE.AmbientLight(0xffffff,0.9));
   const sun=new THREE.DirectionalLight(0xfffde7,1.3);
   sun.position.set(30,80,-10);sun.castShadow=true;scene.add(sun);
-  scene.add(Object.assign(new THREE.DirectionalLight(0xc8e6ff,0.4),{position:{x:-20,y:20,z:20}}));
+  const _fill=new THREE.DirectionalLight(0xc8e6ff,0.4);_fill.position.set(-20,20,20);scene.add(_fill);
   // 잔디
   const grass=new THREE.Mesh(new THREE.PlaneGeometry(800,800),new THREE.MeshLambertMaterial({color:0x5dc83a}));
   grass.rotation.x=-Math.PI/2;grass.position.y=-0.05;scene.add(grass);
@@ -420,7 +410,7 @@ function buildScene(){
 
 function addTree(x,y,z){
   const g=new THREE.Group();
-  g.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.28,2,8),new THREE.MeshLambertMaterial({color:0x8B6914})),{position:{x:0,y:1,z:0}}));
+  const _trunk=new THREE.Mesh(new THREE.CylinderGeometry(0.18,0.28,2,8),new THREE.MeshLambertMaterial({color:0x8B6914}));_trunk.position.y=1;g.add(_trunk);
   [2.8,2.1,1.4].forEach((h,i)=>{
     const c=new THREE.Mesh(new THREE.ConeGeometry(1.2-i*.1,1.6,8),new THREE.MeshLambertMaterial({color:[0x2d8a1c,0x38a622,0x4dbb33][i]}));
     c.position.y=h;g.add(c);
@@ -437,7 +427,7 @@ function addCloud(x,y,z){
 }
 function makeRoadTile(idx){
   const g=new THREE.Group();
-  g.add(Object.assign(new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W,TILE_LEN),new THREE.MeshLambertMaterial({color:0x333340})),{rotation:{x:-Math.PI/2,y:0,z:0}}));
+  const _road=new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W,TILE_LEN),new THREE.MeshLambertMaterial({color:0x333340}));_road.rotation.x=-Math.PI/2;g.add(_road);
   if(idx%2===0){const l=new THREE.Mesh(new THREE.PlaneGeometry(0.2,TILE_LEN*.52),new THREE.MeshBasicMaterial({color:0xffffaa}));l.rotation.x=-Math.PI/2;l.position.y=0.01;g.add(l);}
   const wm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.5});
   [-ROAD_W/2+.35,ROAD_W/2-.35].forEach(ex=>{const el=new THREE.Mesh(new THREE.PlaneGeometry(0.18,TILE_LEN),wm);el.rotation.x=-Math.PI/2;el.position.set(ex,.01,0);g.add(el);});
@@ -517,7 +507,7 @@ function makeObstacleMesh(type){
     for(let i=0;i<5;i++){const s=new THREE.Mesh(new THREE.BoxGeometry(1.4,.36,1.22),new THREE.MeshLambertMaterial({color:i%2===0?0x111111:0xffcc00}));s.position.set(-4.2+i*2.1,.17,0);g.add(s);}
   }else if(type==='cone'){
     const c=new THREE.Mesh(new THREE.ConeGeometry(.38,1.1,10),new THREE.MeshLambertMaterial({color:0xff6600}));c.position.y=.55;g.add(c);
-    g.add(Object.assign(new THREE.Mesh(new THREE.BoxGeometry(.9,.1,.9),new THREE.MeshLambertMaterial({color:0xff6600})),{position:{x:0,y:.05,z:0}}));
+    const _cb=new THREE.Mesh(new THREE.BoxGeometry(.9,.1,.9),new THREE.MeshLambertMaterial({color:0xff6600}));_cb.position.y=.05;g.add(_cb);
   }else if(type==='box'){
     const box=new THREE.Mesh(new THREE.BoxGeometry(1.1,1.1,1.1),new THREE.MeshLambertMaterial({color:0xcc8844}));box.position.y=.55;g.add(box);
     const t=new THREE.Mesh(new THREE.BoxGeometry(1.12,.12,1.12),new THREE.MeshBasicMaterial({color:0xff4400}));t.position.y=.55;g.add(t);
@@ -529,7 +519,7 @@ function makeObstacleMesh(type){
     [-0.14,0.14].forEach(lx=>{const leg=new THREE.Mesh(new THREE.BoxGeometry(.2,.65,.22),new THREE.MeshLambertMaterial({color:0x224488}));leg.position.set(lx,.5,0);g.add(leg);});
     g.userData.isSmombie=true;g.userData.walkT=Math.random()*Math.PI*2;
   }else if(type==='sign'){
-    g.add(Object.assign(new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.4,8),new THREE.MeshLambertMaterial({color:0x888888})),{position:{x:0,y:.7,z:0}}));
+    const _sp=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,1.4,8),new THREE.MeshLambertMaterial({color:0x888888}));_sp.position.y=.7;g.add(_sp);
     const sign=new THREE.Mesh(new THREE.BoxGeometry(.9,.9,.07),new THREE.MeshLambertMaterial({color:0xff2222}));sign.position.y=1.55;g.add(sign);
     const cv=document.createElement('canvas');cv.width=64;cv.height=64;const cx=cv.getContext('2d');cx.font='44px serif';cx.textAlign='center';cx.textBaseline='middle';cx.fillText('⛔',32,36);
     const face=new THREE.Mesh(new THREE.PlaneGeometry(.85,.85),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(cv),transparent:true}));face.position.set(0,1.55,.05);g.add(face);
@@ -569,10 +559,10 @@ function show(id){
   document.getElementById('threeCanvas').style.display=(id==='gameScreen')?'block':'none';
 }
 function startGame(){
-  show('gameScreen');buildScene();reset();countdown();
+  show('gameScreen');resize();buildScene();reset();countdown();
 }
-function retryGame(){show('gameScreen');buildScene();reset();countdown();}
-function goHome(){if(animId)cancelAnimationFrame(animId);show('startScreen');}
+function retryGame(){show('gameScreen');resize();buildScene();reset();countdown();}
+function goHome(){ST="idle";show("startScreen");}
 function showLB(){show('lbScreen');renderLBScreen();}
 function backLB(){show('startScreen');}
 
@@ -623,13 +613,14 @@ function countdown(){
   const tick=()=>{el.textContent=n>0?n:'GO!';el.style.opacity=1;el.style.transition='none';
     setTimeout(()=>{el.style.transition='opacity .35s';el.style.opacity=0;n--;
       if(n>=0)setTimeout(tick,600);
-      else{el.textContent='';ST='play';lastT=performance.now();animId=requestAnimationFrame(loop);}
+      else{el.textContent='';ST='play';lastT=performance.now();}
     },380);};tick();
 }
 
-function loop(ts){const dt=Math.min(ts-lastT,50);lastT=ts;if(ST==='play')update(dt);render3D();animId=requestAnimationFrame(loop);}
+// loop merged into mainLoop
 
 function update(dt){
+  if(!carMesh||!roadTiles.length)return;
   FR++;const dtF=dt/16.67;
   const spec=CAR_SPECS[selectedCar];
 
@@ -748,6 +739,7 @@ function update(dt){
 }
 
 function render3D(){
+  if(!carMesh){renderer.render(scene,camera);return;}
   const tx=carMesh.position.x*.45;
   camera.position.x+=(tx-camera.position.x)*.09;
   camera.position.y=5.5;camera.position.z=carMesh.position.z+11.5;
@@ -839,32 +831,24 @@ function getDeptRanking(scores){
   return Object.values(deptMap).sort((a,b)=>b.best-a.best);
 }
 
-function renderDeptTable(tbodyId,scores){
+function renderRankTable(tbodyId,scores,myScore,limit){
   const tb=document.getElementById(tbodyId);tb.innerHTML='';
-  const depts=getDeptRanking(scores);
-  if(!depts.length){tb.innerHTML='<tr><td colspan="4" style="color:rgba(255,255,255,.25);padding:12px;text-align:center">기록 없음</td></tr>';return;}
-  depts.slice(0,8).forEach((d,i)=>{
-    const rc=i<3?['g','s','b'][i]:'';const md=i<3?['🥇','🥈','🥉'][i]:i+1;
-    const tr=document.createElement('tr');
-    tr.innerHTML=`<td class="dept-rank-num ${rc}">${md}</td><td class="dept-name">${d.dept}</td><td class="dept-score">${d.best.toLocaleString()}</td><td class="dept-count">${d.count}명</td>`;
-    tb.appendChild(tr);
-  });
-}
-function renderAllRankTable(tbodyId,scores,myScore){
-  const tb=document.getElementById(tbodyId);tb.innerHTML='';
-  const top10=scores.slice(0,10);
-  if(!top10.length){tb.innerHTML='<tr><td colspan="3" class="lb-e">기록 없음</td></tr>';return;}
-  top10.forEach((s,i)=>{
-    const rc=i<3?['g','s','b'][i]:'';const md=i<3?['🥇','🥈','🥉'][i]:i+1;
-    const isMine=s.name===pName&&s.dept===pDept&&s.score===myScore;
+  const top=scores.slice(0,limit||10);
+  if(!top.length){tb.innerHTML='<tr><td colspan="3" class="lb-e">아직 기록이 없어요 🏁</td></tr>';return;}
+  top.forEach((s,i)=>{
+    const rc=i<3?['g','s','b'][i]:'';
+    const md=i<3?['🥇','🥈','🥉'][i]:(i+1)+'등';
+    const carIcon={truck:'🚛',sports:'🏎️',bike:'🏍️'}[s.car]||'';
+    const isMine=(myScore!==null)&&s.name===pName&&s.dept===pDept&&s.score===myScore;
     const tr=document.createElement('tr');if(isMine)tr.className='my-row';
-    tr.innerHTML=`<td class="lbr ${rc}">${md}</td><td><div class="lbn">${s.name}</div><div class="lbd">${s.dept} · ${{truck:'🚛',sports:'🏎️',bike:'🏍️'}[s.car]||''}</div></td><td class="lbs">${s.score.toLocaleString()}</td>`;
+    // 부서 · 이름 통합 (예: ES · 김미정)
+    tr.innerHTML=`<td class="lbr ${rc}">${md}</td><td><div class="lbn">${s.dept} · ${s.name}</div><div class="lbd">${carIcon} ${s.dist||0}m</div></td><td class="lbs">${s.score.toLocaleString()}점</td>`;
     tb.appendChild(tr);
   });
 }
 
 async function gameOver(){
-  ST='over';if(animId)cancelAnimationFrame(animId);
+  ST='over';
   saveScore();
   if(typeof window.fbSave==='function')window.fbSave(pName,pDept,score);
 
@@ -875,15 +859,13 @@ async function gameOver(){
   document.getElementById('fGc').textContent=iCnt.g;
   document.getElementById('fSc').textContent=iCnt.s;
   document.getElementById('fBc').textContent=iCnt.b;
-  renderDeptTable('deptBody',all);
-  renderAllRankTable('goLbBody',all,score);
+  renderRankTable('goLbBody',all,score,10);
   show('gameOverScreen');
 }
 
 async function renderLBScreen(){
   const all=typeof window.fbLoad==='function'?await window.fbLoad():getAllScores();
-  renderDeptTable('lbDeptBody',all);
-  renderAllRankTable('lbBody',all,null);
+  renderRankTable('lbBody',all,null,20);
 }
 
 // ── 조이스틱 ──────────────────────────────────────────────────
@@ -904,14 +886,19 @@ window.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')joyX=-1;if(e.key===
 window.addEventListener('keyup',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight')joyX=0;if(e.key==='ArrowUp'||e.key==='ArrowDown')joyY=0;});
 
 window.addEventListener('DOMContentLoaded',()=>{
-  // canvas starts hidden (not on game screen yet)
   document.getElementById('threeCanvas').style.display='none';
   resize();
   window.addEventListener('resize',resize);
   scene.background=new THREE.Color(0x87ceeb);
-  // keep render loop running always so scene is ready
-  function bgRender(){requestAnimationFrame(bgRender);if(ST==='idle'||ST==='cd')renderer.render(scene,camera);}
-  bgRender();
+  // 단일 렌더 루프 - 항상 돈다
+  function mainLoop(ts){
+    requestAnimationFrame(mainLoop);
+    const dt=Math.min(ts-lastT,50);lastT=ts;
+    if(ST==='play'){update(dt);}
+    if(ST==='play'||ST==='cd'){render3D();}
+  }
+  lastT=performance.now();
+  requestAnimationFrame(mainLoop);
 });
 </script>
 
