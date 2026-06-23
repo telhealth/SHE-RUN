@@ -155,6 +155,20 @@ body{background:#87ceeb;color:#fff;font-family:'Noto Sans KR',sans-serif;overflo
 #lbScreen{background:linear-gradient(180deg,#1a0533 0%,#2d0a4e 100%);overflow-y:auto;justify-content:flex-start;padding-top:48px;}
 .lb-t{font-family:‘Black Han Sans’,sans-serif;font-size:24px;color:#ffdd00;letter-spacing:2px;margin-bottom:5px;}
 .btn-bk{width:100%;max-width:300px;padding:10px;background:transparent;border:1px solid rgba(255,220,0,.25);border-radius:11px;color:#ffdd00;font-size:13px;cursor:pointer;margin-top:8px;}
+
+/* 조작법 안내 팝업 */
+#tutorialOv{position:fixed;inset:0;z-index:30;background:rgba(10,5,25,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:24px;}
+#tutorialOv.hidden{display:none!important;}
+.tut-box{background:linear-gradient(160deg,#241040,#1a0a30);border:2px solid rgba(255,220,0,.3);border-radius:22px;padding:24px 22px;max-width:330px;width:100%;box-shadow:0 12px 50px rgba(0,0,0,.5);}
+.tut-title{font-family:‘Black Han Sans’,sans-serif;font-size:24px;color:#ffdd00;text-align:center;letter-spacing:1px;margin-bottom:4px;}
+.tut-car{text-align:center;font-size:13px;color:rgba(255,255,255,.5);margin-bottom:16px;}
+.tut-row{display:flex;align-items:center;gap:12px;margin-bottom:13px;}
+.tut-icon{font-size:26px;width:42px;text-align:center;flex-shrink:0;}
+.tut-txt{font-size:13px;line-height:1.5;color:rgba(255,255,255,.85);}
+.tut-txt b{color:#ffdd00;}
+.tut-divider{height:1px;background:rgba(255,220,0,.15);margin:14px 0;}
+.btn-tut-start{width:100%;padding:14px;background:linear-gradient(135deg,#ffdd00,#ff9500);border:none;border-radius:14px;font-family:‘Black Han Sans’,sans-serif;font-size:20px;letter-spacing:2px;color:#2a0a00;cursor:pointer;box-shadow:0 4px 20px rgba(255,200,0,.3);transition:transform .1s;margin-top:4px;}
+.btn-tut-start:active{transform:scale(.96);}
 </style>
 
 </head>
@@ -245,6 +259,37 @@ body{background:#87ceeb;color:#fff;font-family:'Noto Sans KR',sans-serif;overflo
   <div id="slowOv"></div><div id="hitOv"></div><div id="boostOv"></div><div id="bikeOv"></div>
   <div id="cdWrap"><div id="cdNum"></div></div>
   <div id="joystick-wrap"><div id="joystick-base"><div id="joystick-knob"></div></div></div>
+
+  <!-- 조작법 안내 팝업 -->
+
+  <div id="tutorialOv" class="hidden">
+    <div class="tut-box">
+      <div class="tut-title">🎮 조작법</div>
+      <div class="tut-car" id="tutCarName"></div>
+      <div class="tut-row">
+        <div class="tut-icon">🕹️</div>
+        <div class="tut-txt"><b>조이스틱 위로</b> 밀면 가속!<br>놓으면 천천히 멈춰요</div>
+      </div>
+      <div class="tut-row">
+        <div class="tut-icon">↔️</div>
+        <div class="tut-txt"><b>좌우로</b> 밀어 차선 이동</div>
+      </div>
+      <div class="tut-divider"></div>
+      <div class="tut-row">
+        <div class="tut-icon">⛑️</div>
+        <div class="tut-txt">보호구를 먹으면 <b>속도 ×1.5</b> 부스트!<br>날씨 재난도 막아줘요</div>
+      </div>
+      <div class="tut-row">
+        <div class="tut-icon">🚧</div>
+        <div class="tut-txt">장애물 충돌 시 <b>❤️ 감소</b><br>방지턱은 속도만 뚝!</div>
+      </div>
+      <div class="tut-row">
+        <div class="tut-icon">🌨️</div>
+        <div class="tut-txt">날씨 경보 뜨면 <b>맞는 보호구</b> 챙기기!</div>
+      </div>
+      <button class="btn-tut-start" onclick="confirmTutorial()">확인하고 출발! 🏁</button>
+    </div>
+  </div>
 </div>
 
 <!-- ── 게임오버 화면 ── -->
@@ -302,10 +347,10 @@ const camera=new THREE.PerspectiveCamera(60,1,0.1,500);
 const CAR_SPECS={
   truck:{
     emoji:'🚛', name:'픽업 트럭',
-    maxSpd:11,       // 최고 속도 낮음
-    accel:0.22,      // 가속
-    steer:0.09,      // 조향력
-    friction:0.80,   // 마찰 (높을수록 잘 안돌아옴)
+    maxSpd:6.5,      // 최고 속도 낮음
+    accel:0.14,      // 가속
+    steer:0.10,      // 조향력
+    friction:0.82,   // 마찰 (높을수록 잘 안돌아옴)
     obsResist:true,  // 장애물 1회 무시
     bikeDebuff:false,
     color:0xff6633, roofColor:0xcc4411,
@@ -313,10 +358,10 @@ const CAR_SPECS={
   },
   sports:{
     emoji:'🏎️', name:'스포츠카',
-    maxSpd:18,
-    accel:0.32,
-    steer:0.11,
-    friction:0.76,
+    maxSpd:10,
+    accel:0.20,
+    steer:0.12,
+    friction:0.78,
     obsResist:false,
     bikeDebuff:false,
     color:0xff2255, roofColor:0x77ddff,
@@ -324,10 +369,10 @@ const CAR_SPECS={
   },
   bike:{
     emoji:'🏍️', name:'오토바이',
-    maxSpd:20,
-    accel:0.36,
-    steer:0.14,
-    friction:0.72,
+    maxSpd:11,
+    accel:0.22,
+    steer:0.15,
+    friction:0.74,
     obsResist:false,
     bikeDebuff:true, // 넘어짐 디버프
     color:0x222222, roofColor:0x00ff88,
@@ -360,7 +405,7 @@ const EVLIST=[
 ];
 let curEv=null,evTimer=0,evActive=false,nextEvIn=10000;
 
-const ROAD_W=14,TILE_LEN=22,NUM_TILES=30;
+const ROAD_W=20,TILE_LEN=22,NUM_TILES=30;
 let roadTiles=[],carMesh=null,weatherPts=null;
 let curvePow=0,curveT=0,curveDur=4000,roadCenterX=0;
 const ITEM_KEYS=['h','g','s','b'];
@@ -428,9 +473,20 @@ function addCloud(x,y,z){
 function makeRoadTile(idx){
   const g=new THREE.Group();
   const _road=new THREE.Mesh(new THREE.PlaneGeometry(ROAD_W,TILE_LEN),new THREE.MeshLambertMaterial({color:0x333340}));_road.rotation.x=-Math.PI/2;g.add(_road);
-  if(idx%2===0){const l=new THREE.Mesh(new THREE.PlaneGeometry(0.2,TILE_LEN*.52),new THREE.MeshBasicMaterial({color:0xffffaa}));l.rotation.x=-Math.PI/2;l.position.y=0.01;g.add(l);}
-  const wm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.5});
-  [-ROAD_W/2+.35,ROAD_W/2-.35].forEach(ex=>{const el=new THREE.Mesh(new THREE.PlaneGeometry(0.18,TILE_LEN),wm);el.rotation.x=-Math.PI/2;el.position.set(ex,.01,0);g.add(el);});
+  // 4차선 = 차선 구분선 3개 (중앙 노란선 + 양옆 흰 점선)
+  if(idx%2===0){
+    // 중앙 노란 점선
+    const l=new THREE.Mesh(new THREE.PlaneGeometry(0.22,TILE_LEN*.52),new THREE.MeshBasicMaterial({color:0xffffaa}));l.rotation.x=-Math.PI/2;l.position.y=0.01;g.add(l);
+    // 양옆 흰 점선 (차선 구분)
+    const dm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.6});
+    [-ROAD_W/4,ROAD_W/4].forEach(dx=>{
+      const d=new THREE.Mesh(new THREE.PlaneGeometry(0.16,TILE_LEN*.45),dm);d.rotation.x=-Math.PI/2;d.position.set(dx,0.01,0);g.add(d);
+    });
+  }
+  // 도로 외곽 흰 실선
+  const wm=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.55});
+  [-ROAD_W/2+.4,ROAD_W/2-.4].forEach(ex=>{const el=new THREE.Mesh(new THREE.PlaneGeometry(0.2,TILE_LEN),wm);el.rotation.x=-Math.PI/2;el.position.set(ex,.01,0);g.add(el);});
+  // 연석 (파스텔 핑크/흰 교차)
   const kc=idx%2===0?0xffaaaa:0xffffff;const km=new THREE.MeshLambertMaterial({color:kc});
   [-ROAD_W/2-.45,ROAD_W/2+.05].forEach(kx=>{const kb=new THREE.Mesh(new THREE.BoxGeometry(0.8,.28,TILE_LEN),km);kb.position.set(kx+.35,.14,0);g.add(kb);});
   g.position.z=-idx*TILE_LEN;
@@ -539,14 +595,16 @@ function makeItemMesh(type){
 function placeTileObjects(tile){
   if(tile.userData.itemMesh){tile.remove(tile.userData.itemMesh);tile.userData.itemMesh=null;tile.userData.itemActive=false;}
   if(tile.userData.obsMesh){tile.remove(tile.userData.obsMesh);tile.userData.obsMesh=null;tile.userData.obsActive=false;}
+  // 4차선 중심 위치
+  const LANES=[-ROAD_W*0.30,-ROAD_W*0.10,ROAD_W*0.10,ROAD_W*0.30];
   const r=Math.random();
-  if(r<0.22){
+  if(r<0.24){
     const t=ITEM_KEYS[Math.floor(Math.random()*4)];const m=makeItemMesh(t);
-    const lx=(Math.random()>.5?1:-1)*(1.5+Math.random()*2.5);m.position.set(lx,0,0);tile.add(m);
+    const lx=LANES[Math.floor(Math.random()*4)];m.position.set(lx,0,0);tile.add(m);
     tile.userData.itemMesh=m;tile.userData.itemType=t;tile.userData.itemActive=true;
-  }else if(r<0.55){
+  }else if(r<0.52){
     const ot=OBS_TYPES[Math.floor(Math.random()*OBS_TYPES.length)];const m=makeObstacleMesh(ot);
-    const lx=ot==='bump'?0:(Math.random()-.5)*9;m.position.set(lx,0,0);tile.add(m);
+    const lx=ot==='bump'?0:LANES[Math.floor(Math.random()*4)];m.position.set(lx,0,0);tile.add(m);
     tile.userData.obsMesh=m;tile.userData.obsType=ot;tile.userData.obsActive=true;
   }
 }
@@ -559,9 +617,20 @@ function show(id){
   document.getElementById('threeCanvas').style.display=(id==='gameScreen')?'block':'none';
 }
 function startGame(){
-  show('gameScreen');resize();buildScene();reset();countdown();
+  show('gameScreen');resize();buildScene();reset();showTutorial();
 }
-function retryGame(){show('gameScreen');resize();buildScene();reset();countdown();}
+function retryGame(){show('gameScreen');resize();buildScene();reset();showTutorial();}
+// 조작법 팝업 표시 (ST는 idle 유지 → 도로 정지 상태로 보임)
+function showTutorial(){
+  ST='cd'; // 도로 렌더는 하되 update 안 함
+  document.getElementById('tutCarName').textContent=CAR_SPECS[selectedCar].badge+' 선택됨';
+  document.getElementById('tutorialOv').classList.remove('hidden');
+  render3D(); // 배경 한 번 그려두기
+}
+function confirmTutorial(){
+  document.getElementById('tutorialOv').classList.add('hidden');
+  countdown();
+}
 function goHome(){ST="idle";show("startScreen");}
 function showLB(){show('lbScreen');renderLBScreen();}
 function backLB(){show('startScreen');}
@@ -589,6 +658,8 @@ function reset(){
   ['slowOv','hitOv','boostOv','bikeOv'].forEach(id=>document.getElementById(id).className='');
   document.getElementById('evBanner').className='';
   setKnobPos(0,0);updateHP();updPW();
+  // 카메라 초기 위치 (차 뒤)
+  if(carMesh){camera.position.set(0,5.5,carMesh.position.z+11.5);camera.lookAt(0,1.0,carMesh.position.z-22);}
 }
 
 function updateHP(){for(let i=0;i<3;i++)document.getElementById('hp'+i).classList.toggle('empty',i>=hp);}
@@ -628,7 +699,7 @@ function update(dt){
   if(bikeDebuffActive){bikeDebuffTimer-=dt;if(bikeDebuffTimer<=0)bikeDebuffActive=false;}
 
   // 최대속도 (차량+거리+디버프)
-  let capMax=spec.maxSpd+dist/600;capMax=Math.min(capMax,spec.maxSpd*1.4);
+  let capMax=spec.maxSpd+dist/1200;capMax=Math.min(capMax,spec.maxSpd*1.25);
   if(bikeDebuffActive) capMax*=0.45;
 
   // 이벤트 페널티
@@ -651,15 +722,16 @@ function update(dt){
   // 조이스틱 X → 조향
   carVelX+=joyX*spec.steer*(spd/7+0.4)*dtF;
   carVelX*=Math.pow(spec.friction,dtF);
-  const BOUND=ROAD_W/2-0.8;
+  const BOUND=ROAD_W/2-1.2; // 차폭 고려한 경계
   carX+=carVelX*dtF;
-  if(carX>BOUND){carX=BOUND;carVelX=-Math.abs(carVelX)*0.4;}
-  if(carX<-BOUND){carX=-BOUND;carVelX=Math.abs(carVelX)*0.4;}
+  // 도로 밖으로 절대 못 나감 (단단한 벽)
+  if(carX>BOUND){carX=BOUND;carVelX=0;}
+  if(carX<-BOUND){carX=-BOUND;carVelX=0;}
   carMesh.position.x=carX;
   carMesh.rotation.z=-carVelX*0.3;
   carMesh.rotation.y=joyX*0.07;
 
-  const mv=spd*0.36*dtF;
+  const mv=spd*0.28*dtF;
   dist+=spd*0.08*dtF;score+=Math.floor(spd*0.55*dtF);pos+=mv;
 
   // 커브
